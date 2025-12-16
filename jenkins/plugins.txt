@@ -1,0 +1,51 @@
+# Core plugins
+configuration-as-code:latest
+workflow-aggregator:latest
+git:latest
+github:latest
+pipeline-stage-view:latest
+
+# Security
+matrix-auth:latest
+credentials-binding:latest
+ssh-agent:latest
+
+# Build tools
+maven-plugin:latest
+nodejs:latest
+docker-workflow:latest
+docker-plugin:latest
+
+# Code quality
+sonar:latest
+warnings-ng:latest
+jacoco:latest
+
+# Notifications
+slack:latest
+email-ext:latest
+mailer:latest
+
+# Utilities
+job-dsl:latest
+pipeline-utility-steps:latest
+timestamper:latest
+build-timeout:latest
+ansicolor:latest
+ws-cleanup:latest
+
+# Dashboard
+dashboard-view:latest
+build-monitor-plugin:latest
+
+# SCM
+gitlab-plugin:latest
+bitbucket:latest
+
+# Reporting
+junit:latest
+htmlpublisher:latest
+cobertura:latest
+
+# Blue Ocean (modern UI)
+blueocean:latest

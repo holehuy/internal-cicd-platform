@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # Jenkins Service
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: internal-jenkins
+    restart: unless-stopped
+    privileged: true
+    user: root
+    ports:
+      - "${JENKINS_PORT:-8080}:8080"
+      - "${JENKINS_AGENT_PORT:-50000}:50000"
+    env_file:
+      - ./env/platform.env
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/casc_configs/jenkins.yaml
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./jenkins/casc:/var/jenkins_home/casc_configs:ro
+      - ./jenkins/plugins.txt:/usr/share/jenkins/ref/plugins.txt:ro
+      - ./jenkins/Jenkinsfile-templates:/var/jenkins_home/pipeline-templates:ro
+    networks:
+      - cicd-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # SonarQube Database
+  sonarqube-db:
+    image: postgres:15-alpine
+    container_name: sonarqube-postgres
+    restart: unless-stopped
+    env_file:
+      - ./env/platform.env
+    environment:
+      - POSTGRES_USER=${SONAR_DB_USER:-sonar}
+      - POSTGRES_PASSWORD=${SONAR_DB_PASSWORD}
+      - POSTGRES_DB=${SONAR_DB_NAME:-sonarqube}
+    volumes:
+      - sonarqube_db:/var/lib/postgresql/data
+    networks:
+      - cicd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SONAR_DB_USER:-sonar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SonarQube Service
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: internal-sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    ports:
+      - "${SONARQUBE_PORT:-9000}:9000"
+    env_file:
+      - ./env/platform.env
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/${SONAR_DB_NAME:-sonarqube}
+      - SONAR_JDBC_USERNAME=${SONAR_DB_USER:-sonar}
+      - SONAR_JDBC_PASSWORD=${SONAR_DB_PASSWORD}
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - ./sonarqube/sonar.properties:/opt/sonarqube/conf/sonar.properties:ro
+    networks:
+      - cicd-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9000/api/system/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # Nginx Reverse Proxy (Optional but recommended)
+  nginx:
+    image: nginx:alpine
+    container_name: cicd-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - cicd-network
+    depends_on:
+      - jenkins
+      - sonarqube
+
+networks:
+  cicd-network:
+    driver: bridge
+    name: internal-cicd-network
+
+volumes:
+  jenkins_home:
+    name: jenkins_home
+  sonarqube_db:
+    name: sonarqube_db
+  sonarqube_data:
+    name: sonarqube_data
+  sonarqube_logs:
+    name: sonarqube_logs
+  sonarqube_extensions:
+    name: sonarqube_extensions

@@ -1,0 +1,181 @@
+jenkins:
+  systemMessage: "Internal CI/CD Platform - Managed by Configuration as Code"
+  
+  numExecutors: ${JENKINS_NUM_EXECUTORS:-4}
+  mode: NORMAL
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_USER}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+          name: "Admin User"
+          properties:
+            - "apiToken"
+            - "mailer":
+                emailAddress: "admin@company.com"
+  
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:${JENKINS_ADMIN_USER}"
+        - "Overall/Read:authenticated"
+        - "Job/Build:authenticated"
+        - "Job/Cancel:authenticated"
+        - "Job/Read:authenticated"
+        - "View/Read:authenticated"
+  
+  remotingSecurity:
+    enabled: true
+  
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+
+  # Global Libraries
+  globalLibraries:
+    libraries:
+      - name: "shared-pipeline-library"
+        retriever:
+          modernSCM:
+            scm:
+              git:
+                remote: "https://github.com/your-org/shared-pipeline-library.git"
+                credentialsId: "github-credentials"
+
+  # Cloud agents configuration (Docker)
+  clouds:
+    - docker:
+        name: "docker-agents"
+        dockerApi:
+          dockerHost:
+            uri: "unix:///var/run/docker.sock"
+        templates:
+          - labelString: "docker-agent"
+            dockerTemplateBase:
+              image: "jenkins/inbound-agent:latest"
+              volumes:
+                - "/var/run/docker.sock:/var/run/docker.sock"
+            remoteFs: "/home/jenkins/agent"
+            connector:
+              attach:
+                user: "jenkins"
+            instanceCapStr: "4"
+            retentionStrategy:
+              idleMinutes: 5
+
+# Credentials configuration
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # SonarQube token
+          - string:
+              scope: GLOBAL
+              id: "sonarqube-token"
+              secret: "${SONAR_TOKEN}"
+              description: "SonarQube authentication token"
+          
+          # Git credentials example
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-credentials"
+              username: "${GIT_USERNAME}"
+              password: "${GIT_TOKEN}"
+              description: "GitHub access credentials"
+          
+          # Docker registry
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-registry"
+              username: "${DOCKER_USERNAME}"
+              password: "${DOCKER_PASSWORD}"
+              description: "Docker Registry credentials"
+
+# Tool installations
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+  
+  nodejs:
+    installations:
+      - name: "NodeJS 18"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "18.19.0"
+                    npmPackagesRefreshHours: 72
+      - name: "NodeJS 20"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "20.11.0"
+                    npmPackagesRefreshHours: 72
+  
+  maven:
+    installations:
+      - name: "Maven 3.9"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.6"
+  
+  dockerTool:
+    installations:
+      - name: "docker"
+        properties:
+          - installSource:
+              installers:
+                - fromDocker:
+                    version: "latest"
+
+# SonarQube configuration
+unclassified:
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: "Internal SonarQube"
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: "sonarqube-token"
+  
+  location:
+    url: "http://${JENKINS_DOMAIN:-localhost:8080}/"
+    adminAddress: "cicd@company.com"
+  
+  # Global pipeline libraries
+  globalLibraries:
+    libraries:
+      - name: "pipeline-templates"
+        defaultVersion: "main"
+        implicit: false
+        allowVersionOverride: true
+        retriever:
+          modernSCM:
+            scm:
+              filesystem:
+                path: "/var/jenkins_home/pipeline-templates"
+                clearWorkspace: false
+
+# Job DSL seed configuration
+jobs:
+  - script: >
+      folder('Shared-Pipelines') {
+        displayName('Shared Pipeline Templates')
+        description('Reusable pipeline templates for different tech stacks')
+      }
+      
+      folder('Team-Projects') {
+        displayName('Team Projects')
+        description('Folder for team-specific projects')
+      }
+      
+      folder('Infrastructure') {
+        displayName('Infrastructure Jobs')
+        description('Infrastructure and maintenance jobs')
+      }
