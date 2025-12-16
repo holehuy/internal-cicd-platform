@@ -1,40 +1,40 @@
 # Internal CI/CD Platform
 
-> Nền tảng CI/CD nội bộ tích hợp Jenkins và SonarQube cho các team phát triển
+> Internal CI/CD platform integrating Jenkins and SonarQube for development teams
 
-## 🎯 Tổng quan
+## 🎯 Overview
 
-Platform này cung cấp một giải pháp CI/CD hoàn chỉnh và dễ triển khai cho môi trường nội bộ, bao gồm:
+This platform provides a complete and easy-to-deploy CI/CD solution for internal environments, including:
 
-- **Jenkins**: Automation server cho CI/CD pipelines
-- **SonarQube**: Code quality và security analysis
-- **PostgreSQL**: Database cho SonarQube
-- **Nginx** (tùy chọn): Reverse proxy cho SSL/TLS
+- **Jenkins**: Automation server for CI/CD pipelines
+- **SonarQube**: Code quality and security analysis
+- **PostgreSQL**: Database backend for SonarQube
+- **Nginx** (optional): Reverse proxy for SSL/TLS
 
-## ✨ Tính năng
+## ✨ Features
 
-- ✅ **Configuration as Code**: Jenkins được cấu hình hoàn toàn bằng YAML
-- ✅ **Pre-configured Pipelines**: Templates có sẵn cho Node.js, Python, .NET
-- ✅ **Integrated Code Quality**: Tích hợp sẵn SonarQube
-- ✅ **Docker Support**: Build và deploy containers
-- ✅ **Easy Backup/Restore**: Scripts tự động backup và restore
-- ✅ **Multi-team Support**: Folder structure cho nhiều teams
-- ✅ **Secure by Default**: Authentication và authorization được cấu hình sẵn
+- ✅ **Configuration as Code**: Jenkins is fully configured using YAML
+- ✅ **Pre-configured Pipelines**: Ready-to-use templates for Node.js, Python, .NET
+- ✅ **Integrated Code Quality**: Built-in SonarQube itegration
+- ✅ **Docker Support**: Build and deploy containers
+- ✅ **Easy Backup/Restore**: Automated backup & restore scripts
+- ✅ **Multi-team Support**: Folder-based structure for multiple teams
+- ✅ **Secure by Default**: Authentication and authorization preconfigured
 
-## 📋 Yêu cầu hệ thống
+## 📋 System Requirements
 
 ### Minimum Requirements
 - CPU: 4 cores
 - RAM: 8GB
 - Disk: 50GB SSD
-- OS: Ubuntu 20.04+, CentOS 8+, hoặc tương đương
+- OS: Ubuntu 20.04+, CentOS 8+, or equivalent
 
 ### Software Requirements
 - Docker 20.10+
 - Docker Compose 2.0+
 - Git 2.0+
 
-## 🚀 Cài đặt nhanh
+## 🚀 Quick Installation
 
 ### 1. Clone repository
 
@@ -43,14 +43,14 @@ git clone <repository-url> internal-cicd-platform
 cd internal-cicd-platform
 ```
 
-### 2. Cấu hình environment
+### 2. Configure environment variables
 
 ```bash
 cp env/platform.env.example env/platform.env
 nano env/platform.env
 ```
 
-**Quan trọng**: Thay đổi các giá trị sau:
+**Important**: Udate the following values:
 - `JENKINS_ADMIN_PASSWORD`
 - `SONAR_ADMIN_PASSWORD`
 - `SONAR_DB_PASSWORD`
@@ -62,62 +62,62 @@ chmod +x scripts/*.sh
 ./scripts/deploy.sh
 ```
 
-### 4. Truy cập services
+### 4. Access services
 
 - **Jenkins**: http://localhost:8080
 - **SonarQube**: http://localhost:9000
 
-## 📚 Tài liệu
+## 📚 Documentation
 
 - [Architecture Overview](docs/architecture.md)
 - [Team Onboarding Guide](docs/onboarding-team.md)
 - [Adding New Projects](docs/add-new-project.md)
 - [Security Model](docs/security-model.md)
 
-## 🛠️ Quản lý Platform
+## 🛠️ Platform Management
 
-### Kiểm tra trạng thái
+### Check Status
 
 ```bash
 docker-compose ps
 ```
 
-### Xem logs
+### View Logs
 
 ```bash
-# Tất cả services
+# all services
 docker-compose logs -f
 
-# Một service cụ thể
+# specific service
 docker-compose logs -f jenkins
 docker-compose logs -f sonarqube
 ```
 
-### Dừng platform
+### Stop the platform
 
 ```bash
 ./scripts/stop.sh
 ```
 
-### Khởi động lại
+### Restart services
 
 ```bash
 docker-compose restart
 ```
 
-### Backup dữ liệu
+### Backup data
 
 ```bash
 ./scripts/backup.sh
 ```
 
-### Restore dữ liệu
+### Restore data
 
 ```bash
 ./scripts/restore.sh <backup-file>
 ```
 
-## 🏗️ Cấu trúc dự án
+## 🏗️ Project Structure
 
 ```
 internal-cicd-platform/
@@ -132,16 +132,16 @@ internal-cicd-platform/
 └── docker-compose.yml       # Main compose file
 ```
 
-## 🔐 Bảo mật
+## 🔐 Security
 
-### Thay đổi mật khẩu mặc định
+### Changes default password
 
-1. **Jenkins**: Login và đi tới Manage Jenkins > Configure Global Security
-2. **SonarQube**: Login và đi tới Administration > Security > Users
+1. **Jenkins**: Login và navigate to Manage Jenkins > Configure Global Security
+2. **SonarQube**: Login và navigate to Administration > Security > Users
 
 ### SSL/TLS Configuration
 
-Để enable HTTPS, cấu hình Nginx reverse proxy:
+To enable HTTPS, configure Nginx reverse proxy:
 
 ```bash
 # Generate self-signed certificate
@@ -156,8 +156,8 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 # Allow only necessary ports
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw allow 8080/tcp  # Jenkins (nếu không dùng Nginx)
-ufw allow 9000/tcp  # SonarQube (nếu không dùng Nginx)
+ufw allow 8080/tcp  # Jenkins (if not using Nginx)
+ufw allow 9000/tcp  # SonarQube (if not using Nginx)
 ```
 
 ## 📦 Pipeline Templates
@@ -179,47 +179,47 @@ pipeline {
 }
 ```
 
-Xem thêm tại: [Jenkinsfile-templates](jenkins/Jenkinsfile-templates/)
+See more at: [Jenkinsfile-templates](jenkins/Jenkinsfile-templates/)
 
-## 🤝 Onboarding Team mới
+## 🤝 Onboarding new Team
 
-1. Tạo folder cho team trong Jenkins
-2. Cấp quyền truy cập phù hợp
-3. Tạo project trong SonarQube
-4. Generate SonarQube token
-5. Tạo pipeline từ template
+1. Create a folder for the team in Jenkins
+2. Assign appropriate permission
+3. Create a project in Sonarqube
+4. Generate a SonarQube token
+5. Create a pipeline using a template
 
-Chi tiết: [Team Onboarding Guide](docs/onboarding-team.md)
+Details: [Team Onboarding Guide](docs/onboarding-team.md)
 
 ## 🐛 Troubleshooting
 
-### Jenkins không start
+### Jenkins does not start
 
 ```bash
-# Check logs
+# check logs
 docker logs internal-jenkins
 
-# Check permissions
+# check permissions
 docker exec internal-jenkins ls -la /var/jenkins_home
 ```
 
 ### SonarQube out of memory
 
 ```bash
-# Tăng memory trong platform.env
+# increase memory in platform.env
 SONAR_WEB_JAVAOPTS=-Xmx4096m -Xms1024m
 
-# Restart
+# restart
 docker-compose restart sonarqube
 ```
 
 ### Database connection errors
 
 ```bash
-# Check database health
+# check database health
 docker exec sonarqube-postgres pg_isready
 
-# Restart database
+# restart database
 docker-compose restart sonarqube-db
 ```
 
@@ -228,10 +228,10 @@ docker-compose restart sonarqube-db
 ### Health Checks
 
 ```bash
-# Jenkins
+# jenkins
 curl http://localhost:8080/login
 
-# SonarQube
+# sonarqube
 curl http://localhost:9000/api/system/status
 ```
 
@@ -243,15 +243,15 @@ docker stats
 
 ## 🔄 Updates
 
-### Cập nhật Jenkins plugins
+### Update Jenkins plugins
 
 ```bash
-# Thêm plugin vào jenkins/plugins.txt
-# Restart Jenkins
+# add plugin to jenkins/plugins.txt
+# restart jenkins
 docker-compose restart jenkins
 ```
 
-### Cập nhật Docker images
+### Update Docker images
 
 ```bash
 docker-compose pull
@@ -276,7 +276,7 @@ docker-compose up -d
 
 ## 📝 License
 
-Internal use only - [Your Company Name]
+MIT License
 
 ## 🙏 Acknowledgments
 
