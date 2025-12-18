@@ -53,7 +53,7 @@ nano env/platform.env
 **Important**: Udate the following values:
 - `JENKINS_ADMIN_PASSWORD`
 - `SONAR_ADMIN_PASSWORD`
-- `SONAR_DB_PASSWORD`
+- `POSTGRES_PASSWORD`
 
 ### 3. Deploy platform
 
@@ -62,13 +62,39 @@ chmod +x scripts/*.sh
 ./scripts/deploy.sh
 ```
 
+Or deploy manually:
+
+```bash
+# Build Jenkins custom image
+docker compose build jenkins
+
+# Start all services
+docker compose up -d
+
+# Wait for services to be healthy
+docker compose ps
+```
+
 ### 4. Access services
 
 - **Jenkins**: http://localhost:8080
+  - Username: `admin`
+  - Password: `changeme123!` (or the value you set in `JENKINS_ADMIN_PASSWORD`)
+
 - **SonarQube**: http://localhost:9000
+  - Username: `admin`
+  - Password: `admin` (default - MUST change after first login)
+
+  **ℹ️ Version:** SonarQube LTS Community - Latest Long-Term Support version.
 
 ## 📚 Documentation
 
+### Getting Started
+- **[QUICK-START.md](QUICK-START.md)** - ⚡ Quick start in 5 minutes
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - 📖 Detailed deployment guide
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - 🔧 Solutions for common issues
+
+### Project Documentation
 - [Architecture Overview](docs/architecture.md)
 - [Team Onboarding Guide](docs/onboarding-team.md)
 - [Adding New Projects](docs/add-new-project.md)
@@ -134,10 +160,10 @@ internal-cicd-platform/
 
 ## 🔐 Security
 
-### Changes default password
+### Change default passwords
 
-1. **Jenkins**: Login và navigate to Manage Jenkins > Configure Global Security
-2. **SonarQube**: Login và navigate to Administration > Security > Users
+1. **Jenkins**: Login and navigate to Manage Jenkins > Configure Global Security
+2. **SonarQube**: Login and navigate to Administration > Security > Users
 
 ### SSL/TLS Configuration
 
@@ -181,11 +207,11 @@ pipeline {
 
 See more at: [Jenkinsfile-templates](jenkins/Jenkinsfile-templates/)
 
-## 🤝 Onboarding new Team
+## 🤝 Onboarding New Team
 
 1. Create a folder for the team in Jenkins
-2. Assign appropriate permission
-3. Create a project in Sonarqube
+2. Assign appropriate permissions
+3. Create a project in SonarQube
 4. Generate a SonarQube token
 5. Create a pipeline using a template
 
@@ -270,8 +296,8 @@ docker-compose up -d
 
 ## 📞 Support
 
-- Technical Issues: Create issue trong repository
-- Documentation: Xem folder `docs/`
+- Technical Issues: Create issue in repository
+- Documentation: See `docs/` folder
 - Team Chat: [Link to internal chat]
 
 ## 📝 License

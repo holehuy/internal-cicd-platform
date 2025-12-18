@@ -48,7 +48,7 @@ check_requirements() {
     fi
     
     # Check Docker Compose
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    if ! command -v docker compose &> /dev/null && ! docker compose version &> /dev/null; then
         log_error "Docker Compose is not installed. Please install Docker Compose first."
         exit 1
     fi
@@ -72,7 +72,7 @@ validate_env() {
     local required_vars=(
         "JENKINS_ADMIN_PASSWORD"
         "SONAR_ADMIN_PASSWORD"
-        "SONAR_DB_PASSWORD"
+        "POSTGRES_PASSWORD"
     )
     
     local missing_vars=0
@@ -111,21 +111,43 @@ setup_directories() {
     log_success "Directories created!"
 }
 
-pull_images() {
-    log_info "Pulling Docker images..."
-    
+build_images() {
+    log_info "Building custom images..."
+
     cd "$PROJECT_ROOT"
-    docker-compose pull
-    
-    log_success "Docker images pulled!"
+    source "$ENV_FILE"
+
+    # Build Jenkins custom image with plugins
+    log_info "Building Jenkins image with plugins (this may take a few minutes)..."
+    docker compose build jenkins
+
+    if [ $? -ne 0 ]; then
+        log_error "Failed to build Jenkins image"
+        exit 1
+    fi
+
+    log_success "Jenkins image built successfully!"
+}
+
+pull_images() {
+    log_info "Pulling base Docker images..."
+
+    cd "$PROJECT_ROOT"
+    source "$ENV_FILE"
+
+    # Pull only images that don't need to be built
+    docker compose pull sonarqube sonarqube-db nginx
+
+    log_success "Base images pulled!"
 }
 
 start_services() {
     log_info "Starting services..."
-    
+
     cd "$PROJECT_ROOT"
-    docker-compose up -d
-    
+    source "$ENV_FILE"
+    docker compose up -d
+
     log_success "Services started!"
 }
 
@@ -136,7 +158,7 @@ wait_for_services() {
     local attempt=0
     
     while [ $attempt -lt $max_attempts ]; do
-        if docker-compose ps | grep -q "healthy"; then
+        if docker compose ps | grep -q "healthy"; then
             local jenkins_healthy=$(docker inspect --format='{{.State.Health.Status}}' internal-jenkins 2>/dev/null || echo "starting")
             local sonar_healthy=$(docker inspect --format='{{.State.Health.Status}}' internal-sonarqube 2>/dev/null || echo "starting")
             
@@ -152,7 +174,7 @@ wait_for_services() {
     done
     
     echo
-    log_warning "Services took longer than expected to become healthy. Check logs with: docker-compose logs"
+    log_warning "Services took longer than expected to become healthy. Check logs with: docker compose logs"
 }
 
 show_info() {
@@ -173,7 +195,10 @@ show_info() {
     echo "SonarQube:"
     echo "  URL: http://localhost:${SONARQUBE_PORT:-9000}"
     echo "  Username: admin"
-    echo "  Password: ${SONAR_ADMIN_PASSWORD}"
+    echo "  Password: admin (default - MUST change after first login)"
+    echo
+    echo "⚠️  Note: SonarQube version 9.9.8 (LTS) may show 'no longer active' warning."
+    echo "    This is normal. The Community Edition continues to work fine."
     echo
     echo "📚 Next Steps:"
     echo "  1. Access Jenkins and verify configuration"
@@ -182,8 +207,8 @@ show_info() {
     echo "  4. Read documentation in docs/ folder"
     echo
     echo "🔧 Useful Commands:"
-    echo "  Check status:  docker-compose ps"
-    echo "  View logs:     docker-compose logs -f [service]"
+    echo "  Check status:  docker compose ps"
+    echo "  View logs:     docker compose logs -f [service]"
     echo "  Stop platform: ./scripts/stop.sh"
     echo "  Backup data:   ./scripts/backup.sh"
     echo
@@ -194,10 +219,11 @@ main() {
     echo "Internal CI/CD Platform Deployment"
     echo "=========================================="
     echo
-    
+
     check_requirements
     validate_env
     setup_directories
+    build_images
     pull_images
     start_services
     wait_for_services

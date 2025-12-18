@@ -130,7 +130,7 @@ withCredentials([
 ```bash
 # env/platform.env
 JENKINS_ADMIN_PASSWORD=<strong-password>  # Never commit to git
-SONAR_DB_PASSWORD=<strong-password>       # Encrypted at rest
+POSTGRES_PASSWORD=<strong-password>       # Encrypted at rest
 ```
 
 **Best Practices:**
